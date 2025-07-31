@@ -31,11 +31,7 @@ public class MainGUI extends Application {
         faceService = new FaceRecognitionService();
         electionService = new ElectionService();
         
-        // Check if an admin voter exists, if not, create a temporary one
-        if (authService.getAllVoters().stream().noneMatch(Voter::isAdmin)) {
-            authService.registerVoter("admin", "adminpass", "Administrator", "00000000000", true);
-            showAlert("Initial Admin Account Created", "A temporary admin account (username: admin, password: adminpass) has been created. Please log in and register your face.");
-        }
+
         
         primaryStage.setTitle("PR Election Simulator - Secure Voting System");
         primaryStage.setWidth(800);

@@ -349,7 +349,20 @@ public class AdminDashboardGUI extends Application {
         voterTable.getColumns().addAll(usernameCol, fullNameCol, nationalIdCol, adminCol);
         voterTable.setItems(FXCollections.observableArrayList(authService.getAllVoters()));
 
-        pane.getChildren().addAll(title, voterTable);
+        HBox adminControls = new HBox(10);
+        adminControls.setAlignment(Pos.CENTER_LEFT);
+
+        Button addAdminButton = new Button("Add New Admin");
+        addAdminButton.getStyleClass().addAll("button", "success-button");
+        addAdminButton.setOnAction(e -> showAddAdminDialog());
+
+        Button deleteAdminButton = new Button("Delete Admin");
+        deleteAdminButton.getStyleClass().addAll("button", "danger-button");
+        deleteAdminButton.setOnAction(e -> deleteSelectedAdmin(voterTable));
+
+        adminControls.getChildren().addAll(addAdminButton, deleteAdminButton);
+
+        pane.getChildren().addAll(title, adminControls, voterTable);
         return pane;
     }
 
@@ -669,4 +682,243 @@ public class AdminDashboardGUI extends Application {
         launch(args);
     }
 }
+
+
+
+    private void showAddAdminDialog() {
+        Dialog<Voter> dialog = new Dialog<>();
+        dialog.setTitle("Add New Admin");
+        dialog.setHeaderText("Enter admin details and capture face:");
+
+        ButtonType addButtonType = new ButtonType("Add Admin", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(addButtonType, ButtonType.CANCEL);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 150, 10, 10));
+
+        TextField usernameField = new TextField();
+        usernameField.setPromptText("Username");
+        PasswordField passwordField = new PasswordField();
+        passwordField.setPromptText("Password");
+        TextField fullNameField = new TextField();
+        fullNameField.setPromptText("Full Name");
+        TextField nationalIdField = new TextField();
+        nationalIdField.setPromptText("National ID");
+
+        ImageView cameraView = new ImageView();
+        cameraView.setFitWidth(320);
+        cameraView.setFitHeight(240);
+        cameraView.setStyle("-fx-background-color: black;");
+
+        Button captureButton = new Button("Capture Face");
+        captureButton.setStyle("-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold;");
+
+        Label statusLabel = new Label("");
+        statusLabel.setStyle("-fx-text-fill: #e74c3c;");
+
+        grid.add(new Label("Username:"), 0, 0);
+        grid.add(usernameField, 1, 0);
+        grid.add(new Label("Password:"), 0, 1);
+        grid.add(passwordField, 1, 1);
+        grid.add(new Label("Full Name:"), 0, 2);
+        grid.add(fullNameField, 1, 2);
+        grid.add(new Label("National ID:"), 0, 3);
+        grid.add(nationalIdField, 1, 3);
+        grid.add(cameraView, 0, 4, 2, 1);
+        grid.add(captureButton, 0, 5, 2, 1);
+        grid.add(statusLabel, 0, 6, 2, 1);
+
+        dialog.getDialogPane().setContent(grid);
+
+        final boolean[] faceCaptured = {false};
+
+        captureButton.setOnAction(e -> {
+            if (nationalIdField.getText().trim().isEmpty()) {
+                statusLabel.setText("Please enter National ID first");
+                return;
+            }
+            statusLabel.setText("Starting face capture...");
+            new Thread(() -> {
+                boolean success = new FaceRecognitionService().captureAndStoreFaceWithStream(nationalIdField.getText().trim(), cameraView);
+                javafx.application.Platform.runLater(() -> {
+                    if (success) {
+                        statusLabel.setText("Face captured successfully!");
+                        statusLabel.setStyle("-fx-text-fill: #2ecc71;");
+                        faceCaptured[0] = true;
+                    } else {
+                        statusLabel.setText("Face capture failed. Please try again.");
+                        statusLabel.setStyle("-fx-text-fill: #e74c3c;");
+                    }
+                });
+            }).start();
+        });
+
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == addButtonType) {
+                if (!faceCaptured[0]) {
+                    showAlert("Registration Error", "Please capture face first.", Alert.AlertType.ERROR);
+                    return null;
+                }
+                String username = usernameField.getText().trim();
+                String password = passwordField.getText().trim();
+                String fullName = fullNameField.getText().trim();
+                String nationalId = nationalIdField.getText().trim();
+
+                if (username.isEmpty() || password.isEmpty() || fullName.isEmpty() || nationalId.isEmpty()) {
+                    showAlert("Registration Error", "Please fill all fields.", Alert.AlertType.ERROR);
+                    return null;
+                }
+                return new Voter(username, password, fullName, nationalId, true);
+            }
+            return null;
+        });
+
+        Optional<Voter> result = dialog.showAndWait();
+        result.ifPresent(newAdmin -> {
+            boolean success = authService.registerVoter(newAdmin.getUsername(), newAdmin.getPassword(), newAdmin.getFullName(), newAdmin.getNationalId(), true);
+            if (success) {
+                showAlert("Success", "Admin account for '" + newAdmin.getUsername() + "' added successfully.", Alert.AlertType.INFORMATION);
+                // Refresh the voter table
+                TableView<Voter> voterTable = (TableView<Voter>) ((VBox) ((TabPane) primaryStage.getScene().getRoot()).getTabs().get(3).getContent()).getChildren().get(2);
+                voterTable.setItems(FXCollections.observableArrayList(authService.getAllVoters()));
+            } else {
+                showAlert("Error", "Failed to add admin account. Username or National ID might already exist.", Alert.AlertType.ERROR);
+            }
+        });
+    }
+
+    private void deleteSelectedAdmin(TableView<Voter> voterTable) {
+        Voter selectedVoter = voterTable.getSelectionModel().getSelectedItem();
+        if (selectedVoter == null) {
+            showAlert("No Selection", "Please select an admin account to delete.", Alert.AlertType.WARNING);
+            return;
+        }
+
+        if (selectedVoter.getUsername().equals("superadmin")) {
+            showAlert("Deletion Error", "The primary admin account cannot be deleted.", Alert.AlertType.ERROR);
+            return;
+        }
+
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Confirm Deletion");
+        alert.setHeaderText("Delete Admin Account");
+        alert.setContentText("Are you sure you want to delete the admin account for '" + selectedVoter.getUsername() + "'?");
+
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            boolean success = authService.deleteVoter(selectedVoter.getUsername());
+            if (success) {
+                showAlert("Success", "Admin account for '" + selectedVoter.getUsername() + "' deleted successfully.", Alert.AlertType.INFORMATION);
+                voterTable.setItems(FXCollections.observableArrayList(authService.getAllVoters()));
+            } else {
+                showAlert("Error", "Failed to delete admin account.", Alert.AlertType.ERROR);
+            }
+        }
+    }
+
+    private void showAlert(String title, String message, Alert.AlertType alertType) {
+        Alert alert = new Alert(alertType);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    private void loadPartyData() {
+        partyData.clear();
+        partyData.addAll(electionService.getParties());
+    }
+
+    private void updateElectionStats() {
+        totalVotesLabel.setText("Total Votes Cast: " + electionService.getCurrentElection().getTotalVotes());
+        totalSeatsLabel.setText("Total Seats: " + electionService.getCurrentElection().getTotalSeats());
+    }
+
+    private void updateTotalSeats() {
+        try {
+            int newSeats = Integer.parseInt(totalSeatsField.getText());
+            if (newSeats > 0) {
+                electionService.setTotalSeats(newSeats);
+                updateElectionStats();
+                showAlert("Success", "Total seats updated to " + newSeats + ".", Alert.AlertType.INFORMATION);
+            } else {
+                showAlert("Invalid Input", "Total seats must be a positive number.", Alert.AlertType.WARNING);
+            }
+        } catch (NumberFormatException e) {
+            showAlert("Invalid Input", "Please enter a valid number for total seats.", Alert.AlertType.ERROR);
+        }
+    }
+
+    private void updateResultsDisplay() {
+        resultsContainer.getChildren().clear();
+        electionService.calculateAndAllocateSeats();
+
+        // Pie Chart for Votes
+        ObservableList<PieChart.Data> pieChartData = FXCollections.observableArrayList();
+        electionService.getParties().forEach(party -> {
+            pieChartData.add(new PieChart.Data(party.getName() + " (" + party.getVotes() + ")", party.getVotes()));
+        });
+        PieChart pieChart = new PieChart(pieChartData);
+        pieChart.setTitle("Votes Distribution");
+        resultsContainer.getChildren().add(pieChart);
+
+        // Bar Chart for Seats
+        CategoryAxis xAxis = new CategoryAxis();
+        NumberAxis yAxis = new NumberAxis();
+        BarChart<String, Number> barChart = new BarChart<>(xAxis, yAxis);
+        barChart.setTitle("Seat Allocation");
+        xAxis.setLabel("Party");
+        yAxis.setLabel("Seats");
+
+        XYChart.Series<String, Number> series = new XYChart.Series<>();
+        series.setName("Allocated Seats");
+        electionService.getParties().forEach(party -> {
+            series.getData().add(new XYChart.Data<>(party.getName(), party.getSeats()));
+        });
+        barChart.getData().add(series);
+        resultsContainer.getChildren().add(barChart);
+
+        // Results Table
+        TableView<Party> resultsTable = new TableView<>();
+        TableColumn<Party, String> nameCol = new TableColumn<>("Party Name");
+        nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
+        TableColumn<Party, Integer> votesCol = new TableColumn<>("Votes");
+        votesCol.setCellValueFactory(new PropertyValueFactory<>("votes"));
+        TableColumn<Party, Integer> seatsCol = new TableColumn<>("Seats");
+        seatsCol.setCellValueFactory(new PropertyValueFactory<>("seats"));
+        resultsTable.getColumns().addAll(nameCol, votesCol, seatsCol);
+        resultsTable.setItems(FXCollections.observableArrayList(electionService.getParties()));
+        resultsTable.setPrefHeight(200);
+        resultsContainer.getChildren().add(resultsTable);
+    }
+
+    // Helper method for JavaFX Image conversion
+    private javafx.scene.image.Image matToJavaFXImage(org.bytedeco.opencv.opencv_core.Mat mat) {
+        if (mat == null || mat.empty()) {
+            return null;
+        }
+        // Convert the Mat to a BufferedImage
+        int width = mat.cols();
+        int height = mat.rows();
+        byte[] data = new byte[width * height * (int)mat.elemSize()];
+        mat.get(0, 0, data);
+
+        int type;
+        if (mat.channels() == 1) {
+            type = java.awt.image.BufferedImage.TYPE_BYTE_GRAY;
+        } else {
+            type = java.awt.image.BufferedImage.TYPE_3BYTE_BGR;
+        }
+
+        java.awt.image.BufferedImage bufferedImage = new java.awt.image.BufferedImage(width, height, type);
+        final byte[] targetPixels = ((java.awt.image.DataBufferByte) bufferedImage.getRaster().getDataBuffer()).getData();
+        System.arraycopy(data, 0, targetPixels, 0, data.length);
+
+        // Convert BufferedImage to JavaFX Image
+        return SwingFXUtils.toFXImage(bufferedImage, null);
+    }
+}
+
 

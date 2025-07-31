@@ -10,10 +10,17 @@ public class AuthService {
     private List<Voter> voters;
     private Voter currentVoter;
     private FaceRecognitionService faceRecognitionService;
+    private Voter primaryAdmin;
 
     public AuthService() {
         this.voters = new ArrayList<>();
         this.faceRecognitionService = new FaceRecognitionService();
+        // Initialize primary admin if not already present
+        if (voters.stream().noneMatch(v -> v.getUsername().equals("superadmin") && v.isAdmin())) {
+            primaryAdmin = new Voter("superadmin", "superadminpass", "Primary Administrator", "00000000001", true);
+            voters.add(primaryAdmin);
+            System.out.println("Primary admin account created: superadmin");
+        }
     }
 
     public boolean registerVoter(String username, String password, String fullName, String nationalId, boolean isAdmin) {
@@ -65,7 +72,9 @@ public class AuthService {
             // For admin voters, check if face data exists. If not, allow login without face verification.
             // If face data exists, then require face verification.
             if (voter.isAdmin()) {
-                if (faceRecognitionService.hasFaceData(voter.getNationalId())) {
+                if (voter.getUsername().equals("superadmin")) {
+                    System.out.println("Primary admin login successful (face verification bypassed): " + username);
+                } else if (faceRecognitionService.hasFaceData(voter.getNationalId())) {
                     System.out.println("\nFace verification required for admin login...");
                     if (!faceRecognitionService.verifyFace(voter.getNationalId())) {
                         System.out.println("Login failed: Face verification unsuccessful for admin.");

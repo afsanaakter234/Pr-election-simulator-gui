@@ -3,9 +3,9 @@
 /home/ubuntu/Pr-election-simulator-gui/src/main/java/com/election/simulator/model/Party.java
 /home/ubuntu/Pr-election-simulator-gui/src/main/java/com/election/simulator/model/Voter.java
 /home/ubuntu/Pr-election-simulator-gui/src/main/java/com/election/simulator/service/ElectionService.java
-/home/ubuntu/Pr-election-simulator-gui/src/main/java/com/election/simulator/auth/AuthService.java
-/home/ubuntu/Pr-election-simulator-gui/src/main/java/com/election/simulator/auth/FaceRecognitionService.java
 /home/ubuntu/Pr-election-simulator-gui/src/main/java/com/election/simulator/Main.java
 /home/ubuntu/Pr-election-simulator-gui/src/main/java/com/election/simulator/MainGUI.java
+/home/ubuntu/Pr-election-simulator-gui/src/main/java/com/election/simulator/auth/AuthService.java
+/home/ubuntu/Pr-election-simulator-gui/src/main/java/com/election/simulator/auth/FaceRecognitionService.java
 /home/ubuntu/Pr-election-simulator-gui/src/main/java/com/election/simulator/model/Vote.java
 /home/ubuntu/Pr-election-simulator-gui/src/main/java/com/election/simulator/AdminDashboardGUI.java
