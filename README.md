@@ -1,178 +1,94 @@
-# PR Election Simulator - GUI with Face Recognition
+# PR Election Simulator GUI
 
-This application is a modern election simulator developed using JavaFX for its graphical user interface, integrating real-time face capture and verification to ensure secure user authentication during login and while casting votes.
+This project is a GUI-based election simulator designed to demonstrate a proportional representation (PR) election system. It allows for the management of political parties, configuration of election parameters, and visualization of election results. Additionally, it includes a robust user management system with face recognition for voter authentication and a new primary administrator account with enhanced control.
 
 ## Features
 
--   **Graphical User Interface (GUI)**: Built with JavaFX for an intuitive and user-friendly experience.
--   **Real-time Face Capture**: Utilizes the device's camera to capture and store facial biometrics during user registration.
--   **Face Recognition Verification**: Verifies voter identity through face recognition during login and before casting a vote.
--   **Combined Authentication**: Requires both a correct password and successful face verification for secure login.
--   **Secure Voting**: Ensures that only registered and verified voters can cast votes, preventing duplicate votes.
--   **Admin Dashboard**: (Future/Console-based) Functionality for managing elections and voters.
+### 1. User Authentication and Management
+- **Voter Registration & Login**: Secure registration and login for voters.
+- **Face Recognition**: Biometric authentication for voters using face recognition technology.
+- **Admin Accounts**: Dedicated administrator accounts for managing election parameters and user data.
+- **Primary Administrator**: A special `superadmin` account with bypass for face verification, designed for initial setup and high-level management. This account can create and delete other admin accounts.
 
-## Prerequisites
+### 2. Party Management
+- **Add/Edit/Delete Parties**: Administrators can easily add new political parties, modify existing ones, and remove parties from the system.
+- **Party Details**: Each party can have a name, abbreviation, and an associated icon.
 
-Before you begin, ensure you have the following installed:
+### 3. Election Configuration
+- **Total Seats**: Configure the total number of seats available in the election.
+- **Vote Allocation**: The system automatically calculates and allocates seats based on proportional representation principles.
 
--   **Java Development Kit (JDK)**: Version 11 or higher. You can download it from [Oracle JDK](https://www.oracle.com/java/technologies/javase-downloads.html) or [OpenJDK](https://openjdk.java.net/install/).
--   **Apache Maven**: Version 3.6.0 or higher. Download and install from [Maven Official Website](https://maven.apache.org/download.cgi).
--   **Webcam**: A functional webcam is required for face capture and verification.
+### 4. Election Results & Analytics
+- **Real-time Updates**: View election statistics, including total votes cast and seat distribution.
+- **Visualizations**: Graphical representation of results (e.g., bar charts, pie charts) for easy understanding.
 
-## Setup and Running the Application
+## Getting Started
 
-Follow these steps to set up and run the PR Election Simulator GUI application:
+To get a copy of the project up and running on your local machine, follow these steps:
 
-1.  **Clone the Repository**:
-    ```bash
-    git clone https://github.com/nasrin04090/Pr-election-simulator-gui.git
-    cd Pr-election-simulator-gui
-    ```
+### Prerequisites
 
-2.  **Build the Project**:
-    Navigate to the project root directory (`Pr-election-simulator-gui`) in your terminal and build the project using Maven:
-    ```bash
-    mvn clean install
-    ```
-    This command will compile the source code, download necessary dependencies (including JavaFX and JavaCV), and package the application.
+- **Java Development Kit (JDK)**: Version 11 or higher.
+- **Maven**: Build automation tool.
+- **OpenCV**: Required for face recognition features. Ensure it's properly configured for your system.
 
-3.  **Run the Application**:
-    After a successful build, you can run the JavaFX application using the Maven JavaFX plugin:
-    ```bash
-    mvn javafx:run
-    ```
-    This will launch the GUI application, starting with the login screen.
+### Installation and Setup
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/afsanaakter234/Pr-election-simulator-gui.git
+   cd Pr-election-simulator-gui
+   ```
+
+2. **Set Primary Admin Credentials (Optional but Recommended):**
+   For enhanced security, you can set the primary admin username and password using environment variables. If these are not set, the application will default to `superadmin` for the username and `superadminpass` for the password.
+   ```bash
+   export PRIMARY_ADMIN_USERNAME="your_desired_admin_username"
+   export PRIMARY_ADMIN_PASSWORD="your_desired_admin_password"
+   ```
+   Replace `your_desired_admin_username` and `your_desired_admin_password` with your chosen credentials.
+
+3. **Build and Run the Application:**
+   Navigate to the project root directory and execute the following Maven commands:
+   ```bash
+   mvn clean install
+   mvn exec:java
+   ```
+   This will compile the project, download necessary dependencies, and launch the GUI application.
 
 ## Usage
 
-### Registration
+1. **Login**: Upon launching the application, you will be presented with a login screen. Use the primary admin credentials (either default or those you set via environment variables) to access the Admin Dashboard.
 
-1.  Click on the "Register New Voter" button on the login screen.
-2.  Fill in your desired username, password, full name, and national ID.
-3.  Click "Capture Face". Ensure your face is clearly visible to the webcam. The application will attempt to capture and store your facial data.
-4.  Once face capture is successful, click "Complete Registration".
+2. **Admin Dashboard**: From the Admin Dashboard, you can:
+   - **Manage Parties**: Add, edit, or delete political parties.
+   - **Configure Election**: Set the total number of seats and recalculate seat distribution.
+   - **View Results**: See real-time election results and analytics.
+   - **Manage Users**: Add new admin accounts (with face verification) and delete existing admin accounts.
 
-### Login
-
-1.  Enter your registered username and password on the login screen.
-2.  Click "Login with Face Verification".
-3.  The application will activate your webcam and attempt to verify your face against the stored biometric data.
-4.  If both password and face verification are successful, you will be logged in and redirected to the voting screen.
-
-### Voting
-
-1.  On the voting screen, select your preferred political party.
-2.  Click "Cast Vote with Face Verification".
-3.  Your webcam will activate again for face verification.
-4.  Upon successful face verification, your vote will be recorded.
+3. **Voter Registration (with Face Verification)**: When creating new admin accounts or regular voter accounts, the system will prompt for face capture for biometric verification.
 
 ## Project Structure
 
--   `src/main/java/com/election/simulator/`: Contains the core Java source code.
-    -   `MainGUI.java`: The main JavaFX application class.
-    -   `auth/`: Classes related to authentication, including `AuthService` and `FaceRecognitionService`.
-    -   `model/`: Data models for `Voter`, `Party`, `Election`, and `Vote`.
-    -   `service/`: Business logic for election operations (`ElectionService`).
--   `src/main/resources/haarcascades/`: Contains the Haar Cascade XML file for face detection.
--   `pom.xml`: Maven project configuration file, including dependencies for JavaFX and JavaCV.
--   `face_data/`: (Automatically created) Directory where captured face images are stored.
-
-## Troubleshooting
-
--   **Camera Access Issues**: Ensure your operating system grants permission for Java applications to access your webcam.
--   **Build Failures**: Check your JDK and Maven installations. Ensure all dependencies are downloaded correctly.
--   **`minMaxLoc` Error**: If you encounter a `minMaxLoc` error during compilation, it might be related to the OpenCV version or method signature. The current `FaceRecognitionService` uses a simplified comparison for demonstration purposes.
+- `src/main/java/com/election/simulator/`: Contains the core Java source code.
+  - `MainGUI.java`: The main entry point for the GUI application.
+  - `auth/`: Handles user authentication, including `AuthService.java` and `FaceRecognitionService.java`.
+  - `model/`: Defines data models such as `Voter`, `Party`, `Election`, and `Vote`.
+  - `service/`: Contains business logic, including `ElectionService.java`.
+  - `admin/`: Includes `AdminDashboardGUI.java` for administrator functionalities.
+- `pom.xml`: Maven project configuration file, managing dependencies and build processes.
+- `src/main/resources/styles.css`: CSS file for styling the GUI.
 
 ## Contributing
 
-Feel free to fork this repository, submit pull requests, or open issues for any bugs or feature requests.
+Contributions are welcome! Please feel free to fork the repository, create a new branch, and submit pull requests.
 
+## License
 
+This project is licensed under the MIT License - see the `LICENSE` file for details.
 
-## Testing the Application
+## Contact
 
-To fully test the application, you will need a local development environment with Java 11+ and a webcam.
+For any questions or inquiries, please contact [nasrin04090](https://github.com/nasrin04090).
 
-### Prerequisites
-- Java Development Kit (JDK) 11 or higher
-- Apache Maven
-- A webcam connected to your system
-
-### Steps to Run and Test
-
-1.  **Clone the Repository:**
-    ```bash
-    git clone https://github.com/nasrin04090/Pr-election-simulator-gui.git
-    cd Pr-election-simulator-gui
-    ```
-
-2.  **Compile the Project:**
-    ```bash
-    mvn clean compile
-    ```
-
-3.  **Run the Application:**
-    ```bash
-    mvn javafx:run
-    ```
-
-    This will launch the JavaFX GUI application.
-
-### Testing Scenarios
-
-#### 1. Voter Registration and Login
-
--   **Register a New Voter:**
-    -   Click "Register New Voter" on the login screen.
-    -   Fill in username, password, full name, and national ID.
-    -   Click "Capture Face" and ensure your webcam is active. Follow the prompts for face capture.
-    -   Click "Complete Registration".
--   **Login as Registered Voter:**
-    -   Enter the username and password of the registered voter.
-    -   Click "Login with Face Verification".
-    -   Ensure your webcam is active for face verification. Look at the camera when prompted.
-    -   Upon successful login, you should be taken to the voting screen.
-
-#### 2. Admin Login and Dashboard
-
--   **Login as Admin:**
-    -   Use the following default admin credentials:
-        -   **Username:** `admin`
-        -   **Password:** `admin123`
-    -   Click "Login with Face Verification".
-    -   Perform face verification.
-    -   Upon successful login, you will be redirected to the Admin Dashboard.
-
--   **Admin Dashboard Features:**
-    -   **Party Management Tab:**
-        -   **Add Party:** Click "Add Party", enter details, and optionally select an icon. Verify the new party appears in the table.
-        -   **Edit Party:** Select a party from the table, click "Edit Party", modify details (name, abbreviation, icon), and save. Verify changes.
-        -   **Delete Party:** Select a party, click "Delete Party", and confirm. Verify the party is removed.
-    -   **Election Configuration Tab:**
-        -   **Update Total Seats:** Change the number in the "Total Number of Seats" field and click "Update Seats". Verify the total seats label updates and seats are recalculated.
-        -   **Recalculate Seats:** Click "Recalculate Seats" to re-allocate seats based on current votes.
-    -   **Results & Analytics Tab:**
-        -   Click "Refresh Results" to update the pie chart, bar chart, and results table with current voting data.
-        -   Observe the graphical representation of votes and seats, and the numerical breakdown.
-    -   **Voter Management Tab:**
-        -   View the list of all registered voters.
-
-#### 3. Voting Process
-
--   **Cast a Vote:**
-    -   Login as a regular voter.
-    -   On the voting screen, select a political party.
-    -   Click "Cast Vote with Face Verification".
-    -   Perform face verification.
-    -   Verify that your vote is recorded and you are logged out.
-
-### Expected Behavior
-
--   The application should launch a graphical window.
--   Face capture and verification should utilize your webcam.
--   All buttons and input fields should be responsive.
--   Data should persist across sessions (e.g., registered voters, parties, votes).
--   Admin dashboard features should function as described above, with real-time updates and graphical displays.
-
-If you encounter any issues, please refer to the project's `pom.xml` for dependencies and ensure your Java and Maven installations are correct.
 
