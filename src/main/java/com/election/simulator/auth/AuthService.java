@@ -9,15 +9,11 @@ import java.util.Optional;
 public class AuthService {
     private List<Voter> voters;
     private Voter currentVoter;
-    private FaceRecognitionService faceRecognitionService;
-    private boolean headlessMode = Boolean.parseBoolean(System.getenv("HEADLESS_MODE"));
     private Voter primaryAdmin;
 
     public AuthService() {
         this.voters = new ArrayList<>();
-        if (!headlessMode) {
-            this.faceRecognitionService = new FaceRecognitionService();
-        }
+
         // Initialize primary admin if not already present
         if (voters.stream().noneMatch(v -> v.getUsername().equals("superadmin") && v.isAdmin())) {
             primaryAdmin = new Voter("superadmin", "superadminpass", "Primary Administrator", "00000000001", true);
@@ -46,15 +42,7 @@ public class AuthService {
             return false;
         }
         
-        if (!headlessMode) {
-            System.out.println("\nFace capture required for registration...");
-            if (!faceRecognitionService.captureAndStoreFace(nationalId)) {
-                System.out.println("Registration failed: Face capture unsuccessful.");
-                return false;
-            }
-        } else {
-            System.out.println("Headless mode: Face capture skipped for registration.");
-        }
+
         
         Voter newVoter = new Voter(username, password, fullName, nationalId, isAdmin);
         voters.add(newVoter);
@@ -80,27 +68,11 @@ public class AuthService {
             if (voter.isAdmin()) {
                 if (voter.getUsername().equals("superadmin")) {
                     System.out.println("Primary admin login successful (face verification bypassed): " + username);
-                } else if (!headlessMode && faceRecognitionService.hasFaceData(voter.getNationalId())) {
-                    System.out.println("\nFace verification required for admin login...");
-                    if (!faceRecognitionService.verifyFace(voter.getNationalId())) {
-                        System.out.println("Login failed: Face verification unsuccessful for admin.");
-                        return null;
-                    }
-                } else if (headlessMode) {
-                    System.out.println("Headless mode: Admin login successful (face verification skipped): " + username);
                 } else {
-                    System.out.println("Admin login successful (no face data registered yet): " + username);
+                    System.out.println("Admin login successful (face verification skipped): " + username);
                 }
             } else {
-                if (!headlessMode) {
-                    System.out.println("\nFace verification required for voter login...");
-                    if (!faceRecognitionService.verifyFace(voter.getNationalId())) {
-                        System.out.println("Login failed: Face verification unsuccessful.");
-                        return null;
-                    }
-                } else {
-                    System.out.println("Headless mode: Voter login successful (face verification skipped): " + username);
-                }
+                System.out.println("Voter login successful (face verification skipped): " + username);
             }
             currentVoter = voter;
             System.out.println("Login successful: " + username);
